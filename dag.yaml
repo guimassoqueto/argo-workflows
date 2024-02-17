@@ -1,49 +1,36 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: dag-primay-branch-
+  generateName: dag-diamond-
 spec:
-  entrypoint: statis
+  entrypoint: diamond
   templates:
-  - name: a
+  - name: echo
+    inputs:
+      parameters:
+      - name: message
     container:
-      image:  docker/whalesay:latest
-      command: [cowsay]
-      args: ["hello world"]
-  - name: b
-    retryStrategy:
-      limit: "2"
-    container:
-      image: alpine:latest
-      command: [sh, -c]
-      args: ["sleep 30; echo haha"]
-  - name: c
-    retryStrategy:
-      limit: "3"
-    container:
-      image: alpine:latest
-      command: [sh, -c]
-      args: ["echo intentional failure; exit 2"]
-  - name: d
-    container:
-      image: docker/whalesay:latest
-      command: [cowsay]
-      args: ["hello world"]
-  - name: statis
+      image: alpine:3.7
+      command: [echo, "{{inputs.parameters.message}}"]
+  - name: diamond
     dag:
-      failFast: true
       tasks:
       - name: A
-        template: a
+        template: echo
+        arguments:
+          parameters: [{name: message, value: A}]
       - name: B
-        depends: "A"
-        template: b
+        dependencies: [A]
+        template: echo
+        arguments:
+          parameters: [{name: message, value: B}]
       - name: C
-        depends: "A"
-        template: c
+        dependencies: [A]
+        template: echo
+        arguments:
+          parameters: [{name: message, value: C}]
       - name: D
-        depends: "B"
-        template: d
-      - name: E
-        depends: "D"
-        template: d
+        dependencies: [B, C]
+        template: echo
+        arguments:
+          parameters: [{name: message, value: D}]
