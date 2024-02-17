@@ -14,4 +14,4 @@ spec:
     container:
       image: ubuntu:latest
       command: [ "/bin/sh", "-c" ]
-      args: ["hello world"]
+      args: ["echo", "hello world"]
